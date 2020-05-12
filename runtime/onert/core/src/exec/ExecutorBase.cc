@@ -140,66 +140,22 @@ void ExecutorBase::execute(const IODescription &desc)
   //       do not need to use mutex (otherwise, use mutex)
   std::lock_guard<std::mutex> lock(_mutex);
 
-  std::vector<std::unique_ptr<ISource>> sources{_graph.getInputs().size()};
-  std::vector<std::unique_ptr<ISink>> sinks{_graph.getOutputs().size()};
-
-  // Set input(s)
-  for (uint32_t n = 0; n < _graph.getInputs().size(); ++n)
+  assert(_input_tensors.size() == desc.inputs.size());
+  for (uint32_t i = 0; i < _input_tensors.size(); ++i)
   {
-    ir::IOIndex input_index{n};
-    ir::OperandIndex index{_graph.getInputs().at(input_index)};
+    _input_tensors[i]->buffer(static_cast<uint8_t *>(const_cast<void *>(desc.inputs[i]->buffer)),
+                              desc.inputs[i]->size);
+  }
 
-    if (desc.inputs.at(n) == nullptr)
-    {
-      // Optional input
-      continue;
-    }
-
-    const auto operand_li = _lowered_graph->getLowerInfo()->operand.at(index).get();
-    if (operand_li->def_factors().empty())
-    {
-      // This input is not used (i.e. constant, EX. reshape's axis)
-      continue;
-    }
-
-    //
-    // TODO Allocate memory for input tensor when input tensor is dynamic
-    // e.g.,
-    //  auto dyn_alloc_info = _input_to_dyn_alloc_info.find(_input_tensors[n]);
-    //  if (dyn_alloc_info != _input_to_dyn_alloc_info.end())
-    //  {
-    //    auto ind = dyn_alloc_info->second.ind;
-    //    dyn_alloc_info->second.dyn_tensor_manager->allocate(ind, exec_time_shape);
-    //  }
-
-    const auto &input = *desc.inputs.at(n);
-    sources.at(n) =
-        source(input_index, input.info.typeInfo(), input.buffer, input.size, input.layout);
-
-    auto setter = [&](::onert::backend::ITensor &tensor) { sources.at(n)->push(tensor); };
-
-    _input_tensors[n]->access(setter);
+  assert(_output_tensors.size() == desc.outputs.size());
+  for (uint32_t i = 0; i < _output_tensors.size(); ++i)
+  {
+    _output_tensors[i]->buffer(static_cast<uint8_t *>(const_cast<void *>(desc.outputs[i]->buffer)),
+                               desc.outputs[i]->size);
+    // user_tensor->setBufferSize(setdesc.inputs[i]->size); // Introduce setBufferSize and do this?
   }
 
   executeImpl();
-
-  // Get output(s)
-  for (uint32_t n = 0; n < _graph.getOutputs().size(); ++n)
-  {
-    ir::IOIndex output_index{n};
-    // Optional output
-    if (desc.outputs.at(n) == nullptr)
-    {
-      continue;
-    }
-    const auto &output = *desc.outputs.at(n);
-    sinks.at(n) =
-        sink(output_index, output.info.typeInfo(), output.buffer, output.size, output.layout);
-
-    auto getter = [&](::onert::backend::ITensor &tensor) { sinks.at(n)->pull(tensor); };
-
-    _output_tensors[n]->access(getter);
-  }
 }
 
 } // namespace exec

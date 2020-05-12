@@ -25,6 +25,9 @@
 #include "ir/Layout.h"
 #include "ir/Coordinates.h"
 
+// XXX
+#include "ir/OperandInfo.h"
+
 namespace onert
 {
 namespace backend
@@ -36,6 +39,10 @@ public:
   virtual ~ITensor() = default;
 
 public:
+  virtual void buffer(uint8_t *, size_t)
+  {
+    throw std::runtime_error{"PoC NYI. This is temporary."};
+  }
   virtual uint8_t *buffer() const = 0;
   virtual size_t total_size() const = 0;
   virtual size_t dimension(size_t index) const = 0;

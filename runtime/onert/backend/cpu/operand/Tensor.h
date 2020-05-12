@@ -59,6 +59,7 @@ public:
   int32_t offset() const { return _info.typeInfo().offset(); }
 
 public:
+  void buffer(uint8_t *buf, size_t) override { _buffer = buf; }
   uint8_t *buffer() const override
   {
     if (_allocator != nullptr)

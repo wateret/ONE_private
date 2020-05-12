@@ -58,7 +58,7 @@ void StaticTensorManager::allocateNonconsts(void)
   {
     const auto &ind = pair.first;
     auto tensor = pair.second;
-    if (!_as_constants[ind])
+    if (!_as_constants[ind] && tensor->buffer() == nullptr)
     {
       auto *buffer = _nonconst_mgr->getBuffer(ind);
       tensor->setBuffer(buffer);
