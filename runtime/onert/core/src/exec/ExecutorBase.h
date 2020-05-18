@@ -49,6 +49,8 @@ public:
    * @param tensor_builders Tensor builders that are currently used
    */
   ExecutorBase(std::unique_ptr<ir::LoweredGraph> &&lowered_graph,
+               const std::vector<std::shared_ptr<backend::UserTensor>> &input_tensors,
+               const std::vector<std::shared_ptr<backend::UserTensor>> &output_tensors,
                const backend::TensorBuilderSet &tensor_builders);
 
   virtual ~ExecutorBase() = default;
@@ -66,55 +68,6 @@ public:
   virtual void executeImpl(void) = 0;
 
   void addObserver(std::unique_ptr<IExecutionObserver> ref) { _subject.add(std::move(ref)); };
-
-private:
-  std::unique_ptr<ISource> source(const ir::IOIndex &index, const ir::TypeInfo &type,
-                                  const void *buffer, size_t length, ir::Layout io_layout);
-  std::unique_ptr<ISink> sink(const ir::IOIndex &index, const ir::TypeInfo &type, void *buffer,
-                              size_t length, ir::Layout io_layout);
-
-  template <typename T>
-  std::unique_ptr<ISource> source(const ir::IOIndex &index, const void *buffer, size_t length,
-                                  ir::Layout io_layout)
-  {
-    const auto operand_index = _graph.getInputs().at(index);
-    const auto &operand = _graph.operands().at(operand_index);
-
-    const auto tensor = _input_tensors[index.value()];
-    const auto tensor_layout = tensor->layout();
-
-    if (((io_layout == ir::Layout::NHWC) && (tensor_layout == ir::Layout::NCHW)) ||
-        ((io_layout == ir::Layout::NCHW) && (tensor_layout == ir::Layout::NHWC)))
-    {
-      return std::make_unique<PermutateSource<T>>(buffer, length, operand.shape(), io_layout);
-    }
-    // TODO Change this to return error
-    assert(io_layout != ir::Layout::UNKNOWN ||
-           (tensor_layout != ir::Layout::NCHW && tensor_layout != ir::Layout::NCHW));
-
-    return std::make_unique<CopySource<T>>(buffer, length, operand.shape());
-  }
-
-  template <typename T>
-  std::unique_ptr<ISink> sink(const ir::IOIndex &index, void *buffer, size_t length,
-                              ir::Layout io_layout)
-  {
-    const auto operand_index = _graph.getOutputs().at(index);
-    const auto &operand = _graph.operands().at(operand_index);
-    const auto tensor = _output_tensors[index.value()];
-    const auto tensor_layout = tensor->layout();
-
-    if (((tensor_layout == ir::Layout::NCHW) && (io_layout == ir::Layout::NHWC)) ||
-        ((tensor_layout == ir::Layout::NHWC) && (io_layout == ir::Layout::NCHW)))
-    {
-      return std::make_unique<PermutateSink<T>>(buffer, length, operand.shape(), io_layout);
-    }
-    // TODO Change this to return error
-    assert(io_layout != ir::Layout::UNKNOWN ||
-           (tensor_layout != ir::Layout::NCHW && tensor_layout != ir::Layout::NCHW));
-
-    return std::make_unique<CopySink<T>>(buffer, length, operand.shape());
-  }
 
 protected:
   /**
@@ -136,8 +89,8 @@ protected:
   std::shared_ptr<ir::OperationIndexMap<int64_t>> _indexed_ranks;
   std::unique_ptr<ir::LoweredGraph> _lowered_graph;
   const ir::Graph &_graph;
-  std::vector<std::shared_ptr<backend::ITensor>> _input_tensors;
-  std::vector<std::shared_ptr<backend::ITensor>> _output_tensors;
+  std::vector<std::shared_ptr<backend::UserTensor>> _input_tensors;
+  std::vector<std::shared_ptr<backend::UserTensor>> _output_tensors;
   std::unordered_map<std::shared_ptr<backend::ITensor>, DynAllocInfo> _input_to_dyn_alloc_info;
   backend::TensorManagerSet _tensor_mgrs;
   std::mutex _mutex;
