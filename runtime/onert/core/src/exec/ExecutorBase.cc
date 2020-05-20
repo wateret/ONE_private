@@ -26,7 +26,8 @@ ExecutorBase::ExecutorBase(std::unique_ptr<ir::LoweredGraph> &&lowered_graph,
                            const std::vector<std::shared_ptr<backend::UserTensor>> &input_tensors,
                            const std::vector<std::shared_ptr<backend::UserTensor>> &output_tensors,
                            const backend::TensorBuilderSet &tensor_builders)
-    : _lowered_graph{std::move(lowered_graph)}, _graph{_lowered_graph->graph()}, _input_tensors{input_tensors}, _output_tensors{output_tensors}, _mutex()
+    : _lowered_graph{std::move(lowered_graph)}, _graph{_lowered_graph->graph()},
+      _input_tensors{input_tensors}, _output_tensors{output_tensors}, _mutex()
 {
   // Prepare each TensorManager on each backend
   for (auto &tensor_builder : tensor_builders)
@@ -56,15 +57,15 @@ void ExecutorBase::execute(const IODescription &desc)
   {
     // TODO Better design for ITensor? (we need const_cast as ITensor is writable)
     _input_tensors[i]->setBuffer(static_cast<uint8_t *>(const_cast<void *>(desc.inputs[i]->buffer)),
-                              desc.inputs[i]->size);
+                                 desc.inputs[i]->size);
   }
 
   assert(_output_tensors.size() == desc.outputs.size());
   for (uint32_t i = 0; i < _output_tensors.size(); ++i)
   {
     // TODO Better design for ITensor? (we need const_cast as ITensor is writable)
-    _output_tensors[i]->setBuffer(static_cast<uint8_t *>(const_cast<void *>(desc.outputs[i]->buffer)),
-                               desc.outputs[i]->size);
+    _output_tensors[i]->setBuffer(
+        static_cast<uint8_t *>(const_cast<void *>(desc.outputs[i]->buffer)), desc.outputs[i]->size);
   }
 
   executeImpl();

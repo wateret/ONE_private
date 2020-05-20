@@ -44,7 +44,8 @@ private:
   static void initializeBackendContext(ir::LoweredGraph *lowered_graph);
   static void runTensorRegistration(ir::LoweredGraph *lowered_graph,
                                     const std::vector<ir::OpSequenceIndex> &order);
-  static std::vector<std::shared_ptr<backend::UserTensor>> initializeTensors(ir::LoweredGraph &lowered_graph, const ir::OperandIndexSequence &indices);
+  static std::vector<std::shared_ptr<backend::UserTensor>>
+  initializeTensors(ir::LoweredGraph &lowered_graph, const ir::OperandIndexSequence &indices);
   static exec::IExecutor *createLinearExecutor(std::unique_ptr<ir::LoweredGraph> lowered_graph,
                                                const compiler::CompilerOptions &options);
   static exec::IExecutor *createDataflowExecutor(std::unique_ptr<ir::LoweredGraph> lowered_graph,

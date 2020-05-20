@@ -231,7 +231,7 @@ void LoweredGraph::makeOpSequences(
 
         for (auto operand : node.getInputs())
         {
-          //if (graph().getInputs().contains(operand))
+          // if (graph().getInputs().contains(operand))
           //  continue;
           auto &&lower_info = operands_lower_info.at(operand);
           lower_info->addUsePermuteFactor(operand::PermuteFactor{backend, backend_layout});

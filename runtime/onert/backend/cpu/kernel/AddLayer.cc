@@ -65,8 +65,8 @@ void AddLayer::addQuant8()
   throw std::runtime_error{"NYI"};
 }
 
-void AddLayer::configure(const ITensor *lhs, const ITensor *rhs,
-                         const ir::Activation activation, ITensor *output)
+void AddLayer::configure(const ITensor *lhs, const ITensor *rhs, const ir::Activation activation,
+                         ITensor *output)
 {
   assert(lhs != nullptr);
   assert(rhs != nullptr);
