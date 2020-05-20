@@ -231,8 +231,8 @@ void LoweredGraph::makeOpSequences(
 
         for (auto operand : node.getInputs())
         {
-          if (graph().getInputs().contains(operand))
-            continue;
+          //if (graph().getInputs().contains(operand))
+          //  continue;
           auto &&lower_info = operands_lower_info.at(operand);
           lower_info->addUsePermuteFactor(operand::PermuteFactor{backend, backend_layout});
         }
@@ -276,6 +276,7 @@ void LoweredGraph::makeOpSequences(
 void LoweredGraph::manipulateLowerInfo(
     OperandIndexMap<std::unique_ptr<operand::LowerInfo>> &operands_lower_info)
 {
+#if 0
   const auto default_backend = compiler::BackendManager::get().getDefault();
   for (auto index : _graph.getInputs())
   {
@@ -296,6 +297,23 @@ void LoweredGraph::manipulateLowerInfo(
       });
     }
   }
+#endif
+
+#if 0
+  // nullptr means external tensor
+  // TODO Do a better way to handle I/O tensors
+  const backend::Backend * const io_backend = nullptr;
+  for (auto index : _graph.getInputs())
+  {
+    auto &&lower_info = operands_lower_info.at(index);
+    lower_info->addDefPermuteFactor(operand::PermuteFactor{io_backend, Layout::NHWC /* XXX Get frontend layout */});
+  }
+  for (auto index : _graph.getOutputs())
+  {
+    auto &&lower_info = operands_lower_info.at(index);
+    lower_info->addUsePermuteFactor(operand::PermuteFactor{io_backend, Layout::NHWC /* XXX Get frontend layout */});
+  }
+#endif
 
   // Set LowerInfo for each operand from the operand::LowerInfo holder
   _graph.operands().iterate([&](const OperandIndex &index, Operand &) {
